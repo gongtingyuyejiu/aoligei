@@ -17,6 +17,7 @@ import java.util.List;
 @Service
 public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, SwaggerData> implements SwaggerDataService {
     public static JSONObject root;
+    private final SwaggerDataMapper swaggerDataMapper;
 
     public List<SwaggerData> analyze() {
         List<SwaggerData> swaggerDataList = new ArrayList<>();
@@ -31,7 +32,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
         if (root.has("paths")) {
             paths = root.getJSONObject("paths").keys();
         }
-
+        if(paths!= null){
         while (paths.hasNext()) {
             SwaggerData swaggerData = new SwaggerData();
             //获取服务地址
@@ -122,7 +123,7 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                 SwaggerData copiedData = deepCopy(lastData);
                 swaggerDataList.add(copiedData);
             }
-        }
+        }}
         //将数据存入数据库
         this.saveBatch(swaggerDataList);
         return swaggerDataList;
@@ -130,20 +131,20 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
 
 
     public static String getJson() {
-        String jsonStr = "";
+
         try {
             File file = new File("D:\\SpringBoot\\Swagger_remote\\swagger_java\\src\\main\\resources\\11.json");
             FileReader fileReader = new FileReader(file);
             Reader reader = new InputStreamReader(new FileInputStream(file), "Utf-8");
-            int ch = 0;
+            int ch ;
             StringBuffer sb = new StringBuffer();
             while ((ch = reader.read()) != -1) {
                 sb.append((char) ch);
             }
             fileReader.close();
             reader.close();
-            jsonStr = sb.toString();
-            return jsonStr;
+//            String jsonStr = sb.toString();
+            return sb.toString();
         } catch (Exception e) {
             return null;
         }
@@ -181,7 +182,8 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
                         ((JSONObject) object).put("$ref", jsonObjectTmp);
 //                        System.out.println(root);
                     }
-                    analysisJson((JSONObject) object);
+//                    analysisJson((JSONObject) object);
+                    analysisJson( object);
 
                 }
                 //如果key中是其他
@@ -191,6 +193,13 @@ public class SwaggerDataServiceImpl extends ServiceImpl<SwaggerDataMapper, Swagg
     }// 通过调用SerializationUtils.clone()方法实现了SwaggerData对象的深拷贝
     public static SwaggerData deepCopy(SwaggerData original) {
         return SerializationUtils.clone(original);
+    }
+    public SwaggerDataServiceImpl(SwaggerDataMapper swaggerDataMapper) {
+        this.swaggerDataMapper = swaggerDataMapper;
+    }
+    @Override
+    public SwaggerData getInputOutputParamsById(Long id) {
+        return swaggerDataMapper.findInputOutputParamsById(id);
     }
 
 

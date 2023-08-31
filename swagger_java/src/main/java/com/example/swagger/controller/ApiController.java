@@ -1,13 +1,16 @@
 package com.example.swagger.controller;
 
-import com.example.swagger.common.R;
-import com.example.swagger.service.ApiControllerService;
+
+import com.alibaba.druid.util.StringUtils;
+import com.example.swagger.entity.SwaggerData;
+import com.example.swagger.service.SwaggerDataService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +34,10 @@ public class ApiController {
         private Map<String, List<String>> headers;
         private StringBuffer params;
     }
-
     @Autowired
-    private ApiControllerService apiControllerService;
+    private SwaggerDataService swaggerDataService;
+//    @Autowired
+//    private ApiControllerService apiControllerService;
 
 //    @RequestMapping(method = RequestMethod.GET)
 //    public R<Response> handleGetRequest(Request request) throws IOException {
@@ -42,18 +46,41 @@ public class ApiController {
 //        return R.success(response);
 //    }
 
-    @PostMapping
-    public R<Response> handlePostRequest(@RequestBody Request request) throws IOException {
-        log.info(String.valueOf(request));
-        if (request.getMethod().equals("get")) {
-            Response response = apiControllerService.GetRequestSender(request.getUrl(), request.getHeaders(), request.getParams());
-            return R.success(response);
-        } else if (request.getMethod().equals("post")) {
-            Response response = apiControllerService.PostRequestSender(request.getUrl(), request.getHeaders(), request.getParams());
-            return R.success(response);
+    @PostMapping("/sendJson")
+    public ResponseEntity<?> handlePostRequest(@RequestBody Map<String, Object> requestData) {
+        log.info(String.valueOf(requestData));
+
+        try {
+            Long id = Long.valueOf(String.valueOf(requestData.get("id")));
+            SwaggerData result = swaggerDataService.getInputOutputParamsById(id);
+
+            String method = result.getMethod();
+            if (StringUtils.equalsIgnoreCase(method, "get")) {
+                System.out.println("getgetget");
+            } else if (StringUtils.equalsIgnoreCase(method, "post")) {
+                System.out.println("postpostpost");
+            } else {
+                System.out.println("other");
+            }
+
+            // 进一步处理逻辑
+
+            return ResponseEntity.ok().build();
+        } catch (NumberFormatException e) {
+            // 处理 ID 转换异常
+            return ResponseEntity.badRequest().body("Invalid ID format");
+        } catch (NullPointerException e) {
+            // 处理空指针异常或缺少的参数
+            return ResponseEntity.badRequest().body("Missing or null ID parameter");
         }
-        return R.error("不支持该类型请求");
     }
+
+
+
+
+
+
+}
 
 //    @RequestMapping(method = RequestMethod.PUT)
 //    public ResponseEntity<String> handlePutRequest(@RequestBody String requestBody) {
@@ -66,4 +93,4 @@ public class ApiController {
 //        // 处理DELETE请求
 //        return ResponseEntity.ok("DELETE request handled");
 //    }
-}
+
